@@ -205,7 +205,7 @@ def draw_description_menu(term: Terminal, x: int, y: int, items: List[Tuple[str,
 def draw_status_summary(term: Terminal, y: int, lines: List[Tuple[str, str]], theme: Theme):
     """
     Centered status summary matching Antumbra Screenshot 1:
-          Target: Infinix GT 20 Pro [X6853]
+          Target: Infinix GT 20 Pro [X6871]
           Firmware: None
           Status: None (select folder)
     """

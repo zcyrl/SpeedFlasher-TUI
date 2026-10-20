@@ -153,7 +153,7 @@ usage: main.py [-h] [-i IMGS_PATH] [-d DEVICE] [-c CODENAME] [-v VERSION]
 ### CLI Options
 - `-i, --imgs-path`: Path to folder containing dumped `.img` partition files.
 - `-d, --device`: Target device marketing name (e.g., `Infinix GT 20 Pro`).
-- `-c, --codename`: Board codename (e.g., `X6853`).
+- `-c, --codename`: Board codename (e.g., `X6871`).
 - `-v, --version`: Firmware version (e.g., `V14.0.1.0`).
 - `-m, --maintainer`: Maintainer name (default: `Mehraann`).
 - `--vbmeta`: AVB 2.0 flag policy (`skip`, `disable`, `enable`).
@@ -169,7 +169,7 @@ usage: main.py [-h] [-i IMGS_PATH] [-d DEVICE] [-c CODENAME] [-v VERSION]
 ```bash
 python3 main.py -i /path/to/extracted/firmware \
                -d "Infinix GT 20 Pro" \
-               -c "X6853" \
+               -c "X6871" \
                -v "14.0.1.0" \
                -m "Mehraann" \
                --vbmeta disable \

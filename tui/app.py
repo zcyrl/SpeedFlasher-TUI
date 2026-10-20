@@ -67,7 +67,7 @@ class SpeedFlasherApp:
         self.cfg = {
             "imgs_path": "",
             "device": "Infinix GT 20 Pro",
-            "codename": "X6853",
+            "codename": "X6871",
             "version": "1.0",
             "maintainer": "Mehraann",
             "vbmeta": "skip",        # skip | disable | enable
@@ -108,7 +108,7 @@ class SpeedFlasherApp:
         self.wizard_fields = [
             ("imgs_path", "Firmware Directory", "Folder containing .img or .img.zst files", "text"),
             ("device", "Device Name", "Marketing name (e.g. Infinix GT 20 Pro)", "text"),
-            ("codename", "Device Codename", "Internal board codename (e.g. X6853)", "text"),
+            ("codename", "Device Codename", "Internal board codename (e.g. X6871)", "text"),
             ("version", "Firmware / ROM Version", "e.g. V14.0.1.0 or 1.0", "text"),
             ("maintainer", "Maintainer", "Package maintainer name", "text"),
             ("vbmeta", "AVB 2.0 Mode", "vbmeta flags (skip / disable / enable)", "select_vbmeta"),
