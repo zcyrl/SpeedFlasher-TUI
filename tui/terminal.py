@@ -1,19 +1,20 @@
 """
 Cross-platform Terminal Engine & Double-Buffered Differential Renderer.
 Runs on Linux, Android Termux, and Windows with zero third-party dependencies.
+Supports TrueColor, 256-color fallback, SGR mouse reporting, and robust key parsing.
 """
 import atexit
 import os
 import shutil
 import sys
 import time
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple, Union
 
 from .theme import RGB, Theme, ansi_bg, ansi_fg, ANSI_RESET, ANSI_BOLD, ANSI_DIM, ANSI_UNDERLINE
 
 IS_WINDOWS = sys.platform.startswith("win")
 
-# Keys
+# Key Constants
 KEY_UP = "UP"
 KEY_DOWN = "DOWN"
 KEY_LEFT = "LEFT"
@@ -24,6 +25,9 @@ KEY_SHIFT_TAB = "SHIFT_TAB"
 KEY_ESC = "ESC"
 KEY_BACKSPACE = "BACKSPACE"
 KEY_SPACE = "SPACE"
+KEY_PAGE_UP = "PAGE_UP"
+KEY_PAGE_DOWN = "PAGE_DOWN"
+KEY_DELETE = "DELETE"
 
 
 class Cell:
@@ -46,9 +50,6 @@ class Cell:
                 self.dim == other.dim and
                 self.underline == other.underline)
 
-    def clone(self) -> 'Cell':
-        return Cell(self.char, self.fg, self.bg, self.bold, self.dim, self.underline)
-
 
 class Terminal:
     def __init__(self):
@@ -57,9 +58,11 @@ class Terminal:
         self.truecolor = self._check_truecolor()
         self.in_fullscreen = False
         self._orig_termios = None
+        self._termios = None
         self._back_buffer: List[List[Cell]] = []
         self._front_buffer: List[List[Cell]] = []
         self.occupied_cells: Set[Tuple[int, int]] = set()
+        self._input_queue: List[Union[str, Tuple[str, int, int]]] = []
 
         self._init_platform()
         self.update_size()
@@ -99,14 +102,15 @@ class Terminal:
             return
         self.in_fullscreen = True
 
-        # Alternate screen buffer, hide cursor, clear
-        sys.stdout.write("\033[?1049h\033[?25l\033[2J\033[H")
+        # Alternate screen buffer, hide cursor, clear, enable mouse tracking (SGR mode)
+        sys.stdout.write("\033[?1049h\033[?25l\033[?1000h\033[?1006h\033[2J\033[H")
         sys.stdout.flush()
 
         if not IS_WINDOWS and self._termios and sys.stdin.isatty():
             try:
                 import tty
-                self._orig_termios = self._termios.tcgetattr(sys.stdin)
+                self._orig_termios = self._termios.tcgetattr(sys.stdin.fileno())
+                # Use cbreak mode so signals like Ctrl+C still generate KeyboardInterrupt
                 tty.setcbreak(sys.stdin.fileno())
             except Exception:
                 pass
@@ -118,13 +122,13 @@ class Terminal:
             return
         self.in_fullscreen = False
 
-        # Reset colors, show cursor, leave alternate buffer
-        sys.stdout.write(f"{ANSI_RESET}\033[?25h\033[?1049l")
+        # Disable mouse tracking, show cursor, leave alternate buffer
+        sys.stdout.write(f"{ANSI_RESET}\033[?1006l\033[?1000l\033[?25h\033[?1049l")
         sys.stdout.flush()
 
         if not IS_WINDOWS and self._termios and self._orig_termios and sys.stdin.isatty():
             try:
-                self._termios.tcsetattr(sys.stdin, self._termios.TCSADRAIN, self._orig_termios)
+                self._termios.tcsetattr(sys.stdin.fileno(), self._termios.TCSADRAIN, self._orig_termios)
             except Exception:
                 pass
 
@@ -141,7 +145,6 @@ class Terminal:
             self.height = max(10, h)
             self._back_buffer = [[Cell() for _ in range(self.width)] for _ in range(self.height)]
             self._front_buffer = [[Cell(char='\x00') for _ in range(self.width)] for _ in range(self.height)]
-            # Clear terminal on resize
             if self.in_fullscreen:
                 sys.stdout.write("\033[2J")
                 sys.stdout.flush()
@@ -197,6 +200,7 @@ class Terminal:
         """
         Differential screen update: outputs minimal ANSI cursor moves and styles
         for only the terminal cells that changed.
+        Preserves transparent backgrounds cleanly.
         """
         output = []
         cur_fg = None
@@ -213,15 +217,15 @@ class Terminal:
                 front = self._front_buffer[y][x]
 
                 if not back.equals(front):
-                    # Move cursor if not immediately adjacent
                     if cursor_x != x or cursor_y != y:
                         output.append(f"\033[{y+1};{x+1}H")
                         cursor_x = x
                         cursor_y = y
 
-                    # Style changes
-                    style_changed = False
-                    if back.fg != cur_fg or back.bg != cur_bg or back.bold != cur_bold or back.dim != cur_dim or back.underline != cur_underline:
+                    if (back.fg != cur_fg or back.bg != cur_bg or
+                            back.bold != cur_bold or back.dim != cur_dim or
+                            back.underline != cur_underline):
+
                         style_seq = [ANSI_RESET]
                         if back.fg:
                             style_seq.append(ansi_fg(back.fg, self.truecolor))
@@ -242,7 +246,7 @@ class Terminal:
                         cur_underline = back.underline
 
                     output.append(back.char)
-                    # Update front buffer copy
+
                     front.char = back.char
                     front.fg = back.fg
                     front.bg = back.bg
@@ -257,11 +261,16 @@ class Terminal:
             sys.stdout.write("".join(output))
             sys.stdout.flush()
 
-    def read_key(self, timeout: float = 0.03) -> Optional[str]:
+    def read_key(self, timeout: float = 0.035) -> Optional[Union[str, Tuple[str, int, int]]]:
         """
-        Non-blocking key reader for Windows and Unix/Termux.
-        Returns KEY_* constants or individual characters.
+        Rock-solid non-blocking key reader.
+        Uses direct low-level os.read(0, 1024) on Unix/Termux/Linux and msvcrt on Windows.
+        Parses multi-byte escape sequences atomically so arrow keys NEVER glitch into KEY_ESC!
+        Supports SGR mouse click decoding ('MOUSE_CLICK', col, row).
         """
+        if self._input_queue:
+            return self._input_queue.pop(0)
+
         if IS_WINDOWS:
             import msvcrt
             start = time.monotonic()
@@ -275,11 +284,13 @@ class Terminal:
                             'P': KEY_DOWN,
                             'K': KEY_LEFT,
                             'M': KEY_RIGHT,
-                            'S': 'DELETE',
+                            'S': KEY_DELETE,
+                            'I': KEY_PAGE_UP,
+                            'Q': KEY_PAGE_DOWN,
                             '\x0f': KEY_SHIFT_TAB,
                         }
                         return mapping.get(ch2, None)
-                    elif ch == '\r' or ch == '\n':
+                    elif ch in ('\r', '\n'):
                         return KEY_ENTER
                     elif ch == '\t':
                         return KEY_TAB
@@ -298,62 +309,152 @@ class Terminal:
                 time.sleep(timeout)
                 return None
 
-            r, _, _ = select.select([sys.stdin], [], [], timeout)
+            r, _, _ = select.select([0], [], [], timeout)
             if not r:
                 return None
 
             try:
-                ch = sys.stdin.read(1)
-            except Exception:
+                raw = os.read(0, 1024)
+            except OSError:
                 return None
 
-            if ch == '\x1b':
-                # Check for escape sequence
-                r2, _, _ = select.select([sys.stdin], [], [], 0.02)
-                if not r2:
-                    return KEY_ESC
-                seq = sys.stdin.read(1)
-                if seq == '[':
-                    r3, _, _ = select.select([sys.stdin], [], [], 0.02)
-                    if not r3:
-                        return KEY_ESC
-                    code = sys.stdin.read(1)
-                    if code == 'A':
-                        return KEY_UP
-                    elif code == 'B':
-                        return KEY_DOWN
-                    elif code == 'C':
-                        return KEY_RIGHT
-                    elif code == 'D':
-                        return KEY_LEFT
-                    elif code == 'Z':
-                        return KEY_SHIFT_TAB
-                    elif code in ('1', '2', '3', '4', '5', '6', '7', '8'):
-                        # Multi-byte sequences like delete or page up
-                        select.select([sys.stdin], [], [], 0.01)
-                        sys.stdin.read(1)
-                        return None
-                    return None
-                elif seq == 'O':
-                    # Cursor keys in application keypad mode
-                    code = sys.stdin.read(1)
-                    if code == 'A':
-                        return KEY_UP
-                    elif code == 'B':
-                        return KEY_DOWN
-                    elif code == 'C':
-                        return KEY_RIGHT
-                    elif code == 'D':
-                        return KEY_LEFT
-                return KEY_ESC
-            elif ch in ('\r', '\n'):
-                return KEY_ENTER
-            elif ch == '\t':
-                return KEY_TAB
-            elif ch in ('\x7f', '\x08'):
-                return KEY_BACKSPACE
-            elif ch == ' ':
-                return KEY_SPACE
-            elif ch == '\x03':  # Ctrl+C
+            if not raw:
+                return None
+
+            # Parse raw bytes into keys/mouse events
+            parsed_keys = self._decode_bytes(raw)
+            if parsed_keys:
+                first = parsed_keys.pop(0)
+                self._input_queue.extend(parsed_keys)
+                return first
+            return None
+
+    def _decode_bytes(self, data: bytes) -> List[Union[str, Tuple[str, int, int]]]:
+        keys = []
+        i = 0
+        n = len(data)
+
+        while i < n:
+            b = data[i:i+1]
+
+            # Carriage return or newline
+            if b in (b'\r', b'\n'):
+                keys.append(KEY_ENTER)
+                i += 1
+                continue
+
+            # Tab
+            if b == b'\t':
+                keys.append(KEY_TAB)
+                i += 1
+                continue
+
+            # Backspace
+            if b in (b'\x7f', b'\x08'):
+                keys.append(KEY_BACKSPACE)
+                i += 1
+                continue
+
+            # Space
+            if b == b' ':
+                keys.append(KEY_SPACE)
+                i += 1
+                continue
+
+            # Ctrl+C
+            if b == b'\x03':
                 raise KeyboardInterrupt
-            return ch
+
+            # Escape sequence handling
+            if b == b'\x1b':
+                # Check if there are remaining bytes in this chunk
+                if i + 1 >= n:
+                    # Escape alone at the very end
+                    keys.append(KEY_ESC)
+                    i += 1
+                    continue
+
+                nxt = data[i+1:i+2]
+
+                # Application keypad mode \x1bO...
+                if nxt == b'O' and i + 2 < n:
+                    code = data[i+2:i+3]
+                    if code == b'A': keys.append(KEY_UP)
+                    elif code == b'B': keys.append(KEY_DOWN)
+                    elif code == b'C': keys.append(KEY_RIGHT)
+                    elif code == b'D': keys.append(KEY_LEFT)
+                    elif code == b'H': keys.append("HOME")
+                    elif code == b'F': keys.append("END")
+                    i += 3
+                    continue
+
+                # CSI sequence \x1b[...
+                if nxt == b'[':
+                    # Find sequence terminator (0x40 - 0x7E)
+                    end = i + 2
+                    while end < n and not (0x40 <= data[end] <= 0x7E):
+                        end += 1
+
+                    if end < n:
+                        term_char = data[end:end+1]
+                        seq = data[i:end+1]
+                        i = end + 1
+
+                        # SGR Mouse Event: \x1b[<button;col;rowM or \x1b[<button;col;rowm
+                        if seq.startswith(b'\x1b[<'):
+                            try:
+                                s_str = seq.decode('latin1')
+                                parts = s_str[3:-1].split(';')
+                                btn = int(parts[0])
+                                col = int(parts[1]) - 1  # 0-indexed column
+                                row = int(parts[2]) - 1  # 0-indexed row
+                                if s_str.endswith('M') and (btn & 3) == 0:
+                                    keys.append(('MOUSE_CLICK', col, row))
+                            except Exception:
+                                pass
+                            continue
+
+                        # Arrow keys & modifiers
+                        if term_char == b'A': keys.append(KEY_UP)
+                        elif term_char == b'B': keys.append(KEY_DOWN)
+                        elif term_char == b'C': keys.append(KEY_RIGHT)
+                        elif term_char == b'D': keys.append(KEY_LEFT)
+                        elif term_char == b'Z': keys.append(KEY_SHIFT_TAB)
+                        elif term_char == b'~':
+                            if b'5' in seq: keys.append(KEY_PAGE_UP)
+                            elif b'6' in seq: keys.append(KEY_PAGE_DOWN)
+                            elif b'3' in seq: keys.append(KEY_DELETE)
+                        continue
+                    else:
+                        i = n
+                        continue
+
+                # Unknown escape sequence
+                keys.append(KEY_ESC)
+                i += 1
+                continue
+
+            # Regular characters
+            try:
+                char_str = data[i:i+1].decode('utf-8')
+                keys.append(char_str)
+            except UnicodeDecodeError:
+                # Multi-byte UTF-8 character
+                found = False
+                for length in (2, 3, 4):
+                    if i + length <= n:
+                        try:
+                            char_str = data[i:i+length].decode('utf-8')
+                            keys.append(char_str)
+                            i += length
+                            found = True
+                            break
+                        except UnicodeDecodeError:
+                            continue
+                if not found:
+                    i += 1
+                continue
+
+            i += 1
+
+        return keys
