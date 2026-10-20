@@ -1,4 +1,4 @@
-# SpeedFlasher TUI (Antumbra Edition)
+# SpeedFlasher TUI
 
 ```text
  ███████╗██████╗ ███████╗███████╗██████╗ ███████╗██╗      █████╗ ███████╗██╗  ██╗███████╗██████╗ 
@@ -14,7 +14,7 @@
 ### Universal Android Flashable Package Maker
 **By Mehraann (patched UI by Softbrick)**
 
-*Celestial Antumbra-styled TUI with live animated blinking stars, multi-threaded ZSTD compression, AVB 2.0 flags patcher, and multi-OS Fastboot + Recovery generation.*
+*Modern interactive TUI with live animated blinking stars, multi-threaded ZSTD compression, AVB 2.0 flags patcher, and multi-OS Fastboot + Recovery generation.*
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Termux-blue.svg)](#os-installation-and-usage-guides)
 [![License](https://img.shields.io/badge/License-GPL%20v3-green.svg)](LICENSE)
@@ -32,9 +32,9 @@
 3. **Linux Fastboot**: Native `flash_linux.sh` flasher script.
 4. **Android Termux Fastboot**: Native `flash_termux.sh` flasher script for on-the-go OTG flashing.
 
-Featuring a patched, retro-futuristic **Antumbra-inspired TUI** with:
+Featuring a patched, retro-futuristic TUI with:
 - ✨ **Twinkling Starfield Animation**: Celestial background stars (`✦`, `✧`, `·`) twinkling smoothly around the UI at 30-60 FPS without flicker.
-- 🎨 **Theme Engine**: Penumbra (default dark cosmic lavender), System Dark, Catppuccin Mocha, Rosé Pine, and Gruvbox.
+- 🎨 **Theme Engine**: Cosmic Night (default), System Dark, Catppuccin Mocha, Rosé Pine, and Gruvbox.
 - 🗂️ **Interactive Directory Browser**: Navigate folders directly from terminal to select firmware image directories.
 - 🔍 **Partition Inspector**: Auto-classifies Dynamic Super groups (`system`, `vendor`, `product`, `system_dlkm`, `system_ext`, etc.), direct bootchain partitions, and firmware images.
 - 🛡️ **AVB 2.0 (vbmeta) Patching**: Real-time flag patching (`skip`, `disable`, `enable`).
@@ -161,7 +161,7 @@ usage: main.py [-h] [-i IMGS_PATH] [-d DEVICE] [-c CODENAME] [-v VERSION]
 - `--zip-level`: ZIP compression level (`0`-`9`, default: `1`).
 - `-o, --output`: Custom output path for the flashable ZIP.
 - `--no-fastboot`: Exclude fastboot scripts from the final ZIP package.
-- `--tui`: Force launch the Antumbra TUI.
+- `--tui`: Force launch the interactive TUI with animated stars.
 - `--gui`: Launch the legacy Windows 11 Fluent Glass GUI.
 - `--prompt`: Launch the classic linear console wizard.
 
@@ -199,8 +199,7 @@ SpeedFlasher automatically scans and sorts partitions into appropriate flashing 
 ## Credits & Attribution
 
 - **Original SpeedFlasher Engine**: Created by **Mehraann** ([@sheikhmehraann](https://github.com/sheikhmehraann))
-- **Patched Antumbra TUI Edition**: Created and patched by **Softbrick**
-- **Design Inspiration**: Antumbra TUI & Penumbra by Shomy
+- **Patched TUI Edition**: Created and patched by **Softbrick**
 
 ---
 

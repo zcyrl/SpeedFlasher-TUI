@@ -4,7 +4,7 @@ title SpeedFlasher TUI - Windows Setup
 cd /d "%~dp0"
 
 echo ========================================================================
-echo       SpeedFlasher TUI (Antumbra Edition) - Windows Setup
+echo       SpeedFlasher TUI - Windows Setup
 echo       By Mehraann (patched UI by Softbrick)
 echo ========================================================================
 echo.

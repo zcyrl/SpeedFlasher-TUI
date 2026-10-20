@@ -1,6 +1,6 @@
 """
-Antumbra / Penumbra Color Themes for SpeedFlasher TUI.
-Provides modern pastel color palettes matching Antumbra's exact visual style.
+Color Themes for SpeedFlasher TUI.
+Provides modern pastel color palettes with animated starfield support.
 """
 from dataclasses import dataclass
 from typing import Dict, Tuple
@@ -28,25 +28,24 @@ class Theme:
     selection_bg: RGB
 
 
-# Antumbra / Penumbra theme (Default)
-# Inspired by Antumbra TUI's deep cosmic space & lavender aesthetic
-THEME_PENUMBRA = Theme(
-    name="Penumbra",
-    id="penumbra",
+# Cosmic Night (Default Theme)
+THEME_COSMIC = Theme(
+    name="Cosmic Night",
+    id="cosmic",
     is_dark=True,
-    bg=(2, 5, 23),             # Deep night void
-    card_bg=(14, 18, 38),       # Translucent slate violet card
-    fg=(224, 222, 244),         # Crisp soft white text
-    accent=(255, 225, 246),     # Soft blossom pink/lavender
-    highlight=(183, 168, 217),  # Glowing lavender highlight
-    muted=(144, 140, 170),      # Subdued slate purple
-    star=(160, 150, 195),       # Starlight purple-white
-    border=(58, 55, 92),        # Subtle border
-    border_active=(183, 168, 217), # Focused border
-    success=(156, 207, 216),    # Soft cyan/foam
-    warning=(246, 193, 119),    # Warm gold
-    error=(235, 111, 146),      # Muted crimson rose
-    selection_bg=(35, 33, 60),  # Active row background
+    bg=(2, 5, 23),                 # Deep night void
+    card_bg=(14, 18, 38),           # Slate violet card
+    fg=(224, 222, 244),             # Crisp soft white text
+    accent=(255, 225, 246),         # Soft blossom pink/lavender
+    highlight=(183, 168, 217),      # Glowing lavender highlight
+    muted=(144, 140, 170),          # Subdued slate purple
+    star=(160, 150, 195),           # Starlight purple-white
+    border=(110, 100, 150),         # Clean visible border
+    border_active=(196, 167, 231),  # Focused border
+    success=(156, 207, 216),        # Soft cyan
+    warning=(246, 193, 119),        # Warm gold
+    error=(235, 111, 146),          # Crimson rose
+    selection_bg=(35, 33, 60),      # Active row background
 )
 
 # System / Classic Dark
@@ -61,7 +60,7 @@ THEME_SYSTEM_DARK = Theme(
     highlight=(120, 170, 255),
     muted=(125, 125, 145),
     star=(140, 160, 200),
-    border=(60, 60, 80),
+    border=(80, 80, 110),
     border_active=(120, 170, 255),
     success=(110, 220, 160),
     warning=(255, 200, 100),
@@ -77,11 +76,11 @@ THEME_CATPPUCCIN = Theme(
     bg=(30, 30, 46),
     card_bg=(24, 24, 37),
     fg=(205, 214, 244),
-    accent=(203, 166, 247),     # Mauve
-    highlight=(180, 190, 254),  # Lavender
-    muted=(108, 112, 134),      # Overlay0
-    star=(147, 153, 178),       # Subtext0
-    border=(49, 50, 68),
+    accent=(203, 166, 247),         # Mauve
+    highlight=(180, 190, 254),      # Lavender
+    muted=(108, 112, 134),          # Overlay0
+    star=(147, 153, 178),           # Subtext0
+    border=(90, 92, 120),
     border_active=(203, 166, 247),
     success=(166, 227, 161),
     warning=(249, 226, 175),
@@ -101,7 +100,7 @@ THEME_ROSE_PINE = Theme(
     highlight=(196, 167, 231),
     muted=(110, 106, 134),
     star=(144, 140, 170),
-    border=(68, 65, 90),
+    border=(95, 90, 125),
     border_active=(196, 167, 231),
     success=(156, 207, 216),
     warning=(246, 193, 119),
@@ -121,7 +120,7 @@ THEME_GRUVBOX = Theme(
     highlight=(250, 189, 47),
     muted=(146, 131, 116),
     star=(213, 196, 161),
-    border=(80, 73, 69),
+    border=(100, 95, 90),
     border_active=(250, 189, 47),
     success=(184, 187, 38),
     warning=(250, 189, 47),
@@ -130,7 +129,7 @@ THEME_GRUVBOX = Theme(
 )
 
 ALL_THEMES: Dict[str, Theme] = {
-    "penumbra": THEME_PENUMBRA,
+    "cosmic": THEME_COSMIC,
     "system_dark": THEME_SYSTEM_DARK,
     "catppuccin": THEME_CATPPUCCIN,
     "rose_pine": THEME_ROSE_PINE,

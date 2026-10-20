@@ -1,7 +1,7 @@
 """
-Antumbra-styled UI Widgets for SpeedFlasher TUI.
+UI Widgets for SpeedFlasher TUI.
 Provides transparent cards, floating description boxes, form inputs, toggles,
-dropdowns, progress indicators, and banners matching Antumbra's exact visual design.
+dropdowns, progress indicators, and banners for SpeedFlasher TUI.
 """
 from typing import Any, List, Optional, Tuple
 from .theme import Theme
@@ -111,7 +111,7 @@ def draw_card(term: Terminal, x: int, y: int, w: int, h: int,
 def draw_floating_description_box(term: Terminal, x: int, y: int, w: int,
                                   text: str, theme: Theme, ascii_mode: bool = False):
     """
-    Renders the exact Antumbra floating description box:
+    Renders the floating description box:
     - Completely transparent background (bg=None) letting terminal blur/wallpaper show.
     - Complete, unbroken rounded box with NO cuts or title gaps: ╭──────╮, │ text │, ╰──────╯
     - Snug height matching wrapped text.
@@ -146,7 +146,7 @@ def draw_floating_description_box(term: Terminal, x: int, y: int, w: int,
 
 def draw_header(term: Terminal, theme: Theme, compact: bool = False) -> int:
     """
-    Renders the Antumbra title banner and attribution subtitle:
+    Renders the SpeedFlasher title banner and attribution subtitle:
     'By Mehraann (patched UI by Softbrick)'
     """
     w = term.width
@@ -175,7 +175,7 @@ def draw_description_menu(term: Terminal, x: int, y: int, items: List[Tuple[str,
                           selected: int, theme: Theme, desc_x: int, desc_w: int,
                           ascii_mode: bool = False):
     """
-    Renders Antumbra description menu:
+    Renders description menu:
     - Left: Clean bullet items with `> * ` cursor
     - Right: Snug, completely transparent floating description box vertically following the selected item
     """
@@ -204,7 +204,7 @@ def draw_description_menu(term: Terminal, x: int, y: int, items: List[Tuple[str,
 
 def draw_status_summary(term: Terminal, y: int, lines: List[Tuple[str, str]], theme: Theme):
     """
-    Centered status summary matching Antumbra Screenshot 1:
+    Centered status summary:
           Target: Infinix GT 20 Pro [X6871]
           Firmware: None
           Status: None (select folder)

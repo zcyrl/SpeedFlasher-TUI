@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 
 echo "========================================================================"
-echo "      SpeedFlasher TUI (Antumbra Edition) - Termux Installer"
+echo "      SpeedFlasher TUI - Termux Installer"
 echo "      By Mehraann (patched UI by Softbrick)"
 echo "========================================================================"
 

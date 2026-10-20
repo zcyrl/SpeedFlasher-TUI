@@ -1,5 +1,5 @@
 """
-Antumbra-styled TUI Application for SpeedFlasher.
+TUI Application for SpeedFlasher.
 Complete interactive dashboard, wizard, partition inspector, settings,
 directory explorer, and live build engine with animated twinkling starfield.
 """
@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .theme import ALL_THEMES, THEME_PENUMBRA, Theme
+from .theme import ALL_THEMES, THEME_COSMIC, Theme
 from .stars import Starfield
 from .terminal import (
     Terminal, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
@@ -58,7 +58,7 @@ class SpeedFlasherApp:
 
     def __init__(self):
         self.term = Terminal()
-        self.theme: Theme = THEME_PENUMBRA
+        self.theme: Theme = THEME_COSMIC
         self.starfield = Starfield(density=0.8, compact=False, enabled=True)
         self.page = self.PAGE_MAIN
         self.running = True
@@ -78,7 +78,7 @@ class SpeedFlasherApp:
         self.partitions: Dict[str, Dict[str, Any]] = {}
         self.auto_detected = False
 
-        # Menu state (Clean Antumbra style, without emoji width offsets)
+        # Menu state (Clean terminal style, without emoji width offsets)
         self.menu_idx = 0
         self.menu_items = [
             ("Build Flashable Package",
@@ -94,7 +94,7 @@ class SpeedFlasherApp:
              "Cycle through AVB 2.0 flags: Skip (preserve stock), Disable (disable verification), Enable.",
              "action_cycle_vbmeta"),
             ("Settings & Appearance",
-             "Customize theme (Penumbra, Rosé Pine, Catppuccin, Gruvbox), stars animation, and defaults.",
+             "Customize themes, animated stars background, and tool defaults.",
              "action_settings"),
             ("Quit SpeedFlasher",
              "Exit SpeedFlasher cleanly.",
@@ -126,7 +126,7 @@ class SpeedFlasherApp:
         self.settings_theme_idx = 0
         self.settings_idx = 0
         self.settings_fields = [
-            ("theme", "Antumbra Theme", "Visual style for Antumbra TUI", "theme_select"),
+            ("theme", "Interface Theme", "Visual style for SpeedFlasher TUI", "theme_select"),
             ("compat", "Compatibility Mode", "Use standard ASCII characters for stars (*, +, .)", "toggle"),
             ("stars", "Show stars", "Display animated stars in the background", "toggle"),
             ("density", "Star Density", "Density of celestial stars (Low / Normal / High)", "density_select"),
@@ -254,14 +254,14 @@ class SpeedFlasherApp:
             item_y = menu_y + idx * 2
             self.click_regions.append((menu_x, item_y, menu_x + menu_w, item_y, ("menu_click", idx)))
 
-        # Draw left menu + right snug transparent floating description box (Antumbra Screenshot 1)
+        # Draw left menu + right snug transparent floating description box
         draw_description_menu(
             self.term, menu_x, menu_y, self.menu_items, self.menu_idx,
             self.theme, desc_x, desc_w,
             ascii_mode=self.starfield.compact
         )
 
-        # Draw centered status summary below menu (Antumbra Screenshot 1)
+        # Draw centered status summary below menu
         status_y = menu_y + len(self.menu_items) * 2 + 1
         dev_val = f"{self.cfg['device']} [{self.cfg['codename']}]" if self.cfg['codename'] else self.cfg['device']
         fw_path = self.cfg['imgs_path'] or "None"
@@ -430,7 +430,7 @@ class SpeedFlasherApp:
         draw_footer(self.term, "[Esc] Back to Menu", self.theme)
 
     def _render_settings(self):
-        """Settings page matching Antumbra Screenshot 2 (Transparent cards)"""
+        """Settings page (Transparent cards)"""
         w, h = self.term.width, self.term.height
         card_w = min(80, w - 4)
         card_x = max(2, (w - card_w) // 2)
@@ -446,12 +446,12 @@ class SpeedFlasherApp:
                   title="INTERFACE", theme=self.theme, active=False,
                   ascii_mode=self.starfield.compact, fill_bg=False)
 
-        # Field 0: Antumbra Theme dropdown
+        # Field 0: Interface Theme dropdown
         f0_sel = (self.settings_idx == 0)
         self.click_regions.append((card_x + 3, card_y + 2, card_x + card_w - 6, card_y + 4, ("settings_click", 0)))
         draw_form_dropdown(
             self.term, card_x + 3, card_y + 2, card_w - 10,
-            "Antumbra Theme", "Visual style for Antumbra",
+            "Interface Theme", "Visual style for SpeedFlasher TUI",
             f"{self.theme.name}", f0_sel, self.theme,
             ascii_mode=self.starfield.compact
         )

@@ -10,7 +10,7 @@ BIN_DIR="$HOME/.local/bin"
 DESKTOP_DIR="$HOME/.local/share/applications"
 
 echo "========================================================================"
-echo "       SpeedFlasher TUI (Antumbra Edition) - Linux Installer"
+echo "       SpeedFlasher TUI - Linux Installer"
 echo "       By Mehraann (patched UI by Softbrick)"
 echo "========================================================================"
 

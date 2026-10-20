@@ -368,7 +368,7 @@ def cli_flow():
     parser.add_argument("-o", "--output", help="Optional custom output ZIP path")
     parser.add_argument("--no-fastboot", action="store_true", help="Exclude Fastboot installer scripts and binaries")
     parser.add_argument("--gui", action="store_true", help="Launch the Windows 11 Fluent Glass GUI")
-    parser.add_argument("--tui", action="store_true", help="Launch the Antumbra-styled TUI with animated stars")
+    parser.add_argument("--tui", action="store_true", help="Launch the TUI with animated stars")
     parser.add_argument("--prompt", "--cli", action="store_true", dest="prompt_mode", help="Launch classic text prompt wizard")
 
     args = parser.parse_args()

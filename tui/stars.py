@@ -1,6 +1,6 @@
 """
 Animated blinking stars background engine for SpeedFlasher TUI.
-Faithfully recreates Antumbra TUI's celestial starfield animation.
+Animated celestial starfield background engine.
 """
 import random
 import time
