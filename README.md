@@ -1,278 +1,209 @@
-# SpeedFlasher
-
-Universal Android Flashable Package Maker for Windows, Linux, and Android Termux.
-
-SpeedFlasher converts partition image dumps (`.img` or `.img.zst`) into flashable recovery ZIPs (compatible with TWRP, OrangeFox, PBRP, and Lineage Recovery) and multi-platform Fastboot flasher scripts (`flash_windows.bat`, `flash_linux.sh`, `flash_termux.sh`).
-
-## Features
-
-- Multi-Platform Support: Windows (x86_64), Linux (x86_64), and Android Termux (ARM64).
-- Recovery Installer: Self-contained POSIX `update-binary` supporting dynamic partitions (via `lptools`), dual-slot detection (A/B and A-only), and in-memory streaming Zstandard decompression directly to block devices.
-- Fastboot Installers: Generates ready-to-run Fastboot flasher scripts for Windows, Linux, and Termux with bundled tools and on-the-fly partition decompression.
-- AVB 2.0 (Vbmeta) Control: Directly inspects and patches AVB0 header flags (`disable`, `enable`, or `skip`) across `vbmeta`, `vbmeta_system`, and `vbmeta_vendor`.
-- Partition Classification: Automatically identifies dynamic partitions (`system`, `vendor`, `product`, `system_ext`, etc.), direct bootchain images (`boot`, `dtbo`, `init_boot`, `vendor_boot`, `vbmeta`), and firmware images (`lk`, `logo`, `md1img`, `tee`, etc.).
-- Multi-Threaded Compression: Parallel Zstandard compression (levels 0-22) with configurable ZIP compression (levels 0-9) and standard Zip64 support.
-- Dependency Auto-Resolution: Automatically verifies and installs missing platform dependencies on startup.
-- Clean Output Summary: Displays a full breakdown of packaged partitions, output path, and file size, with terminal window retention.
-
-## Project Structure
+# SpeedFlasher TUI (Antumbra Edition)
 
 ```text
-SpeedFlasher/
-├── bin/
-│   ├── device/                  # ARM64 recovery binaries (lptools, avbctl, zstd-arm64, etc.)
-│   ├── linux/                   # Linux host tools (fastboot, zstd)
-│   └── windows/                 # Windows host tools (fastboot.exe, zstd.exe, DLLs)
-├── core/
-│   ├── avb.py                   # AVB 2.0 vbmeta header parser and flag patcher
-│   ├── builder.py               # Package staging, multi-threaded compression, and ZIP packaging
-│   ├── partitions.py            # Partition image scanning and filesystem detection
-│   ├── linux/
-│   │   ├── installer.py         # Linux Fastboot shell script generator
-│   │   └── platform.py          # Linux dependency checker and tool resolver
-│   ├── recovery/
-│   │   └── updater.py           # Recovery POSIX update-binary shell generator
-│   ├── termux/
-│   │   ├── installer.py         # Termux Fastboot shell script generator
-│   │   └── platform.py          # Termux environment setup and package manager installer
-│   └── windows/
-│       ├── installer.py         # Windows Fastboot batch script generator
-│       └── platform.py          # Windows dependency checker and tool resolver
-├── output/                      # Default build target directory
-├── tests/
-│   └── test_speedflasher.py     # Multi-OS unit and integration test suite
-├── gui.py                       # Windows 11 Fluent Dark Mica GUI
-├── main.py                      # Interactive CLI and headless entrypoint
-├── requirements.txt             # Python requirements (optional fallback)
-├── setup.bat                    # Windows auto-bootstrap (installs Python & requirements)
-├── start_gui.bat                # Windows 11 GUI launcher (runs auto-setup if needed)
-├── start.bat                    # Windows CLI launcher (runs auto-setup if needed)
-├── start.sh                     # Linux launcher
-└── start_termux.sh              # Termux launcher
+ ███████╗██████╗ ███████╗███████╗██████╗ ███████╗██╗      █████╗ ███████╗██╗  ██╗███████╗██████╗ 
+ ██╔════╝██╔══██╗██╔════╝██╔════╝██╔══██╗██╔════╝██║     ██╔══██╗██╔════╝██║  ██║██╔════╝██╔══██╗
+ ███████╗██████╔╝█████╗  █████╗  ██║  ██║█████╗  ██║     ███████║███████╗███████║█████╗  ██████╔╝
+ ╚════██║██╔═══╝ ██╔══╝  ██╔══╝  ██║  ██║██╔══╝  ██║     ██╔══██║╚════██║██╔══██║██╔══╝  ██╔══██╗
+ ██████╔╝██║     ███████╗███████╗██████╔╝██║     ███████╗██║  ██║███████║██║  ██║███████╗██║  ██║
+ ╚═════╝ ╚═╝     ╚══════╝╚══════╝╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
 ```
 
-## OS Usage Guides
+<div align="center">
 
-### 1. Windows Guide
+### Universal Android Flashable Package Maker
+**By Mehraann (patched UI by Softbrick)**
 
-#### Requirements
-- Windows 10 / 11 (64-bit)
-- Python 3.8 or newer (*Zero-setup required*: `start_gui.bat` and `start.bat` automatically detect, download, and configure Python and `requirements.txt` if missing)
+*Celestial Antumbra-styled TUI with live animated blinking stars, multi-threaded ZSTD compression, AVB 2.0 flags patcher, and multi-OS Fastboot + Recovery generation.*
 
-#### Building a Flashable Package (GUI Mode)
-1. Double-click `start_gui.bat` or run:
-   ```cmd
-   python gui.py
-   ```
-   *(Or run `python main.py --gui`)*
-2. The native Windows 11 Fluent Dark Mica interface will launch.
-3. Click **Browse...** to select your dumped partition images directory. The tool automatically detects partitions and parses `build.prop` for device metadata.
-4. Adjust AVB 2.0 flags, Zstandard compression, and ZIP levels as needed.
-5. Click **Build Flashable Package**. Progress and live logs will stream in the embedded console.
-6. Once complete, click **Open Output Folder** to reveal the compiled ZIP package.
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Termux-blue.svg)](#os-installation-and-usage-guides)
+[![License](https://img.shields.io/badge/License-GPL%20v3-green.svg)](LICENSE)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Standard%20Library%20Only-brightgreen.svg)](#features)
 
-#### Building a Flashable Package (CLI Mode)
-1. Double-click `start.bat` or run:
-   ```cmd
-   python main.py
-   ```
-2. Follow the interactive prompts (enter the folder path containing your `.img` files).
-3. The output package is automatically saved to `output/<version>-<codename>-Flashable.zip`.
-4. The terminal window stays open after completion so you can review the build summary.
-
-#### Flashing the Generated Package on Windows
-- **Via Custom Recovery**:
-  Copy the generated `.zip` to your device (internal storage, SD card, or USB OTG) and flash it in TWRP, OrangeFox, or PBRP.
-- **Via Fastboot**:
-  1. Extract the generated `.zip` file on your PC.
-  2. Put your device into Fastboot mode (`adb reboot bootloader` or hold Volume Down + Power).
-  3. Connect the device via USB and double-click `flash_windows.bat`.
-  4. The script uses bundled `fastboot.exe` and `zstd.exe`, decompresses partitions on-the-fly, flashes firmware, reboots to fastbootd for dynamic partitions, and prompts whether to format userdata.
-
-#### Windows Troubleshooting
-- If device is not detected in fastboot, install the Google USB Driver or OEM Fastboot Driver.
-- If Python is not recognized, re-run Python installer and select "Add python.exe to PATH".
+</div>
 
 ---
 
-### 2. Linux Guide
+## Overview
 
-#### Requirements
-- Ubuntu, Debian, Fedora, Arch Linux, or any standard Linux distribution (x86_64)
-- Python 3.8+ (no extra pip packages required; bundled tools run out-of-the-box)
+**SpeedFlasher TUI** converts firmware partition image dumps (`.img` or `.img.zst`) into universal flashable ZIP packages compatible with:
+1. **Custom Recoveries**: TWRP, OrangeFox, PBRP, Lineage Recovery (POSIX `update-binary`).
+2. **Windows Fastboot**: Native `flash_windows.bat` flasher script.
+3. **Linux Fastboot**: Native `flash_linux.sh` flasher script.
+4. **Android Termux Fastboot**: Native `flash_termux.sh` flasher script for on-the-go OTG flashing.
 
-#### Installation
-Install Python using your distribution package manager:
+Featuring a patched, retro-futuristic **Antumbra-inspired TUI** with:
+- ✨ **Twinkling Starfield Animation**: Celestial background stars (`✦`, `✧`, `·`) twinkling smoothly around the UI at 30-60 FPS without flicker.
+- 🎨 **Theme Engine**: Penumbra (default dark cosmic lavender), System Dark, Catppuccin Mocha, Rosé Pine, and Gruvbox.
+- 🗂️ **Interactive Directory Browser**: Navigate folders directly from terminal to select firmware image directories.
+- 🔍 **Partition Inspector**: Auto-classifies Dynamic Super groups (`system`, `vendor`, `product`, `system_dlkm`, `system_ext`, etc.), direct bootchain partitions, and firmware images.
+- 🛡️ **AVB 2.0 (vbmeta) Patching**: Real-time flag patching (`skip`, `disable`, `enable`).
+- ⚡ **Zero Mandatory External Dependencies**: Runs out-of-the-box on clean Python 3 across Windows, Linux, and Android Termux.
 
+---
+
+## Keyboard Controls
+
+| Key | Action |
+| :--- | :--- |
+| `↑` / `↓` or `k` / `j` | Navigate menus and form fields |
+| `Enter` / `Space` | Select menu action, toggle switch, or edit field |
+| `Tab` / `Shift+Tab` | Jump to next / previous form control |
+| `Esc` / `b` | Go back / cancel / exit |
+| `1` - `9` | Quick jump to numbered menu item |
+
+---
+
+## OS Installation and Usage Guides
+
+### 1. Android Termux Guide (No PC Required)
+
+Run SpeedFlasher directly on your Android phone using Termux!
+
+#### One-Line Quick Install
+Open Termux and run:
 ```bash
-# Ubuntu / Debian
-sudo apt update && sudo apt install -y python3
-
-# Fedora
-sudo dnf install -y python3
-
-# Arch Linux
-sudo pacman -S --needed python
+pkg update -y && pkg install -y git python zstd android-tools
+git clone https://github.com/zcyrl/SpeedFlasher-TUI.git
+cd SpeedFlasher-TUI
+bash install_termux.sh
 ```
 
-#### Building a Flashable Package
-1. Grant execute permissions and run the launcher:
-   ```bash
-   chmod +x start.sh
-   ./start.sh
-   ```
-   Or run directly:
-   ```bash
-   python3 main.py
-   ```
-2. Enter the path to your extracted partition images when prompted.
-3. The resulting ZIP file is generated in the `output/` directory.
+#### Running SpeedFlasher in Termux
+Once installed, you can launch the TUI from **any directory** simply by typing:
+```bash
+flashable
+```
+*(Or navigate to the folder and run `python main.py`)*
 
-#### Flashing the Generated Package on Linux
-- **Via Custom Recovery**:
-  Transfer the `.zip` to your device and flash it through recovery.
-- **Via Fastboot**:
-  1. Extract the `.zip` package:
-     ```bash
-     unzip <package-name>.zip -d rom_extracted
-     cd rom_extracted
-     ```
-  2. Boot device into Fastboot mode (`adb reboot bootloader`).
-  3. Grant execute permission and run the installer:
-     ```bash
-     chmod +x flash_linux.sh
-     ./flash_linux.sh
-     ```
+#### Flashing via OTG in Termux
+1. Put the target phone in Fastboot mode.
+2. Connect it to your Termux device using a USB-C OTG cable.
+3. Extract the generated `Flashable.zip`.
+4. Run:
+   ```bash
+   bash flash_termux.sh
+   ```
 
-#### Linux Troubleshooting
-- If fastboot requires root permissions or fails with `no permissions`, install android udev rules:
-  ```bash
-  sudo apt install -y android-sdk-platform-tools-common
-  # Or create /etc/udev/rules.d/51-android.rules
+---
+
+### 2. Windows Guide (Windows 10 / 11)
+
+#### Requirements
+- Windows 10 or 11 (64-bit)
+- Python 3.8 or newer (If not installed, `setup.bat` will automatically guide you)
+
+#### Quick Setup
+1. Clone or download the repository:
+   ```cmd
+   git clone https://github.com/zcyrl/SpeedFlasher-TUI.git
+   cd SpeedFlasher-TUI
+   ```
+2. Double-click **`install_windows.bat`** (or `start.bat`).
+   - Creates a **"SpeedFlasher TUI"** shortcut directly on your Desktop.
+   - Automatically bootstraps dependencies if needed.
+
+#### Launching the TUI
+- Double-click the Desktop shortcut or **`start.bat`**
+- Or run in Command Prompt / Windows Terminal / PowerShell:
+  ```cmd
+  python main.py
   ```
 
----
-
-### 3. Android Termux Guide
-
-#### Requirements
-- Android device running Termux (from F-Droid or GitHub release)
-- At least 4GB of free internal storage for building ROM packages
-
-#### Installation
-Run `start_termux.sh` to automatically install all dependencies:
-```bash
-chmod +x start_termux.sh
-./start_termux.sh
-```
-
-Or install dependencies manually:
-```bash
-pkg update -y
-pkg install -y python zstd android-tools
-termux-setup-storage
-```
-
-#### Building a Flashable Package in Termux
-1. Run the interactive tool:
-   ```bash
-   python main.py
-   ```
-2. When prompted for `Enter IMGS Path :`, enter the path where your dump is stored, for example:
-   ```text
-   /sdcard/Download/rom_dump
-   ```
-3. Complete the interactive prompts. The package will be compiled into `output/`.
-
-#### Flashing the Generated Package in Termux (Device-to-Device via USB OTG)
-1. Extract the `.zip` file in Termux:
-   ```bash
-   unzip output/<package-name>.zip -d /sdcard/Download/flasher
-   cd /sdcard/Download/flasher
-   ```
-2. Connect the target device in Fastboot mode to your phone using a USB OTG cable.
-3. Run the Termux installer:
-   ```bash
-   chmod +x flash_termux.sh
-   ./flash_termux.sh
-   ```
-
-#### Termux Troubleshooting
-- If storage access is denied, run `termux-setup-storage` and grant permission.
-- If Termux process gets killed during compression, acquire wake lock by running `termux-wake-lock`.
+#### Flashing on Windows
+1. Extract the generated ZIP in `output/`.
+2. Boot target phone into Fastboot mode.
+3. Connect via USB and double-click `flash_windows.bat`.
 
 ---
 
-## Interactive Prompts
+### 3. Linux Guide (Ubuntu, Debian, Arch, Fedora)
 
-When running without arguments, the tool interactively prompts for configuration:
+#### Quick Install
+```bash
+git clone https://github.com/zcyrl/SpeedFlasher-TUI.git
+cd SpeedFlasher-TUI
+bash install.sh
+```
+`install.sh` sets file permissions, registers a global `flashable` terminal command in `~/.local/bin`, and creates an application desktop entry.
+
+#### Running on Linux
+Launch from any terminal with:
+```bash
+flashable
+```
+Or:
+```bash
+python3 main.py
+```
+
+---
+
+## Command-Line Arguments & Automation
+
+You can also use SpeedFlasher headlessly in automated CI/CD pipelines or scripts:
 
 ```text
-========================================================================
-                              SpeedFlasher
-========================================================================
-
-Enter IMGS Path : C:\path\to\dumped_images
-Devicename : Infinix GT 20 Pro
-Codename : X6871
-Version : 15.1.2.180
-AVB 2.0 (vbmeta) : disable
-Maintainer : Mehraan
-Ztsd Compression (0-22) : 1
-Zip Compression (0-9) : 1
+usage: main.py [-h] [-i IMGS_PATH] [-d DEVICE] [-c CODENAME] [-v VERSION]
+               [-m MAINTAINER] [--vbmeta {skip,disable,enable}]
+               [--zstd-level ZSTD_LEVEL] [--zip-level ZIP_LEVEL] [-o OUTPUT]
+               [--no-fastboot] [--tui] [--gui] [--prompt]
 ```
 
-Once the build finishes, the tool prints a structured summary and waits for Enter before closing:
+### CLI Options
+- `-i, --imgs-path`: Path to folder containing dumped `.img` partition files.
+- `-d, --device`: Target device marketing name (e.g., `Infinix GT 20 Pro`).
+- `-c, --codename`: Board codename (e.g., `X6853`).
+- `-v, --version`: Firmware version (e.g., `V14.0.1.0`).
+- `-m, --maintainer`: Maintainer name (default: `Mehraann`).
+- `--vbmeta`: AVB 2.0 flag policy (`skip`, `disable`, `enable`).
+- `--zstd-level`: Zstandard compression level (`0`-`22`, default: `1`).
+- `--zip-level`: ZIP compression level (`0`-`9`, default: `1`).
+- `-o, --output`: Custom output path for the flashable ZIP.
+- `--no-fastboot`: Exclude fastboot scripts from the final ZIP package.
+- `--tui`: Force launch the Antumbra TUI.
+- `--gui`: Launch the legacy Windows 11 Fluent Glass GUI.
+- `--prompt`: Launch the classic linear console wizard.
 
-```text
-========================================================================
-                      SpeedFlasher Build Summary
-========================================================================
-Device Name        : Infinix GT 20 Pro
-Codename           : X6871
-ROM Version        : 15.1.2.180
-Maintainer         : Mehraan
-AVB 2.0 (vbmeta)   : DISABLE
-ZSTD Compression   : Level 1
-ZIP Compression    : Level 1
-------------------------------------------------------------------------
-Partitions Packaged: Total 12
-  - Dynamic (Super): 4 (system, vendor, product, system_ext)
-  - Direct (System): 5 (boot, dtbo, init_boot, vendor_boot, vbmeta)
-  - Firmware/Boot  : 3 (lk, logo, md1img)
-------------------------------------------------------------------------
-Output File        : output/15.1.2.180-X6871-Flashable.zip
-Package Size       : 1845.20 MB
-Status             : SUCCESS
-========================================================================
-
-Press Enter to exit...
-```
-
-## Command Line Usage
-
-For automated environments, pass arguments directly:
-
+### Headless CLI Example
 ```bash
-python main.py \
-  --imgs-path /path/to/images \
-  --device "Infinix GT 20 Pro" \
-  --codename "X6871" \
-  --version "15.1.2.180" \
-  --maintainer "Mehraan" \
-  --vbmeta disable \
-  --zstd-level 1 \
-  --zip-level 1
+python3 main.py -i /path/to/extracted/firmware \
+               -d "Infinix GT 20 Pro" \
+               -c "X6853" \
+               -v "14.0.1.0" \
+               -m "Mehraann" \
+               --vbmeta disable \
+               --zstd-level 3
 ```
 
-## Running Tests
+---
 
-Execute the test suite across all OS modules:
+## Partition Classification Engine
 
-```bash
-python -m unittest discover tests
-```
+SpeedFlasher automatically scans and sorts partitions into appropriate flashing logic:
+
+1. **Super / Dynamic Partitions**:
+   `system`, `vendor`, `product`, `system_ext`, `system_dlkm`, `vendor_dlkm`, `odm`, `odm_dlkm`, `my_product`, `my_stock`, etc.
+   *Handled via `lptools` in recovery and fastbootd flashing.*
+
+2. **Bootchain & Direct Partitions**:
+   `boot`, `dtbo`, `init_boot`, `vendor_boot`, `recovery`, `vbmeta`, `vbmeta_system`, `vbmeta_vendor`, `pvmfw`.
+   *Flashed directly to bootloader partitions with slot detection.*
+
+3. **Firmware Partitions**:
+   `lk`, `logo`, `md1img`, `tee`, `scp`, `sspm`, `spmfw`, `gz`, `dpm`, `pi_img`, `cam_vpu`, `preloader`, etc.
+   *Flashed safely to peripheral storage partitions.*
+
+---
+
+## Credits & Attribution
+
+- **Original SpeedFlasher Engine**: Created by **Mehraann** ([@sheikhmehraann](https://github.com/sheikhmehraann))
+- **Patched Antumbra TUI Edition**: Created and patched by **Softbrick**
+- **Design Inspiration**: Antumbra TUI & Penumbra by Shomy
+
+---
 
 ## License
 
-MIT License. See [LICENSE](file:///C:/Users/Admin/Videos/Github/SpeedFlasher/LICENSE) for details.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See [LICENSE](LICENSE) for details.

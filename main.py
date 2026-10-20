@@ -368,12 +368,23 @@ def cli_flow():
     parser.add_argument("-o", "--output", help="Optional custom output ZIP path")
     parser.add_argument("--no-fastboot", action="store_true", help="Exclude Fastboot installer scripts and binaries")
     parser.add_argument("--gui", action="store_true", help="Launch the Windows 11 Fluent Glass GUI")
+    parser.add_argument("--tui", action="store_true", help="Launch the Antumbra-styled TUI with animated stars")
+    parser.add_argument("--prompt", "--cli", action="store_true", dest="prompt_mode", help="Launch classic text prompt wizard")
 
     args = parser.parse_args()
 
     if args.gui:
         from gui import launch_gui
         launch_gui()
+        return
+
+    if args.tui:
+        from tui import launch_tui
+        launch_tui()
+        return
+
+    if args.prompt_mode:
+        interactive_flow()
         return
 
     imgs_path = clean_path(args.imgs_path)
@@ -412,8 +423,18 @@ def main():
     if "--gui" in sys.argv:
         from gui import launch_gui
         launch_gui()
-    elif len(sys.argv) == 1:
+    elif "--prompt" in sys.argv or "--wizard-cli" in sys.argv:
         interactive_flow()
+    elif len(sys.argv) == 1 or "--tui" in sys.argv:
+        if sys.stdin.isatty():
+            try:
+                from tui import launch_tui
+                launch_tui()
+            except Exception as e:
+                print(f"[Notice] TUI initialization fallback ({e}), starting standard wizard...")
+                interactive_flow()
+        else:
+            interactive_flow()
     else:
         cli_flow()
 
